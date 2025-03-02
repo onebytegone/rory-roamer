@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const tiledPlugin = () => {
    return {
@@ -15,7 +16,38 @@ const tiledPlugin = () => {
 
 export default defineConfig({
    base: './',
-   plugins: [tiledPlugin()],
+   plugins: [
+      tiledPlugin(),
+      VitePWA({
+         registerType: 'prompt',
+         injectRegister: false,
+
+         pwaAssets: {
+            disabled: false,
+            config: true,
+         },
+
+         manifest: {
+            name: 'Rory Roamer',
+            short_name: 'Rory Roamer',
+            background_color: '#000',
+            theme_color: '#333333',
+         },
+
+         workbox: {
+            globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+            cleanupOutdatedCaches: true,
+            clientsClaim: true,
+         },
+
+         devOptions: {
+            enabled: false,
+            navigateFallback: 'index.html',
+            suppressWarnings: true,
+            type: 'module',
+         },
+      }),
+   ],
    // currently excalibur plugins are commonjs
    // this forces vite to keep things from bundling ESM together with commonjs
    optimizeDeps: {

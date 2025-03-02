@@ -1,6 +1,9 @@
 import { Color, DisplayMode, Engine, FadeInOut } from 'excalibur';
 import { loader } from './resources';
 import { IslandLevel } from './scenes/IslandLevel';
+import { initPWA } from './pwa';
+
+initPWA(document.body);
 
 const MIN_TILE_COUNT = 10,
       TILE_SIZE = 16;
