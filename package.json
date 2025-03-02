@@ -8,6 +8,7 @@
       "start": "vite",
       "build": "tsc && vite build",
       "serve": "vite preview",
+      "standards": "echo 'No standards defined'",
       "test": "npm run build && npx playwright test",
       "test:integration-update": "npx playwright test --update-snapshots"
    },
