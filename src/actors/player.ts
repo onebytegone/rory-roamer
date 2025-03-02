@@ -1,11 +1,14 @@
-import { Actor, Animation, CollisionType, Engine, Keys, range, SpriteSheet, vec } from 'excalibur';
+import { Actor, Animation, CollisionType, Engine, Keys, range, SpriteSheet, vec, Vector } from 'excalibur';
 import { Resources } from '../resources';
+import nipplejs from 'nipplejs';
 
-const RUN_SPEED = 64;
+const RUN_SPEED = 64,
+      TOUCH_JOYSTICK_DEADZONE = 0.35;
 
 export class Player extends Actor {
 
    private _facingRight = true;
+   private _touchJoystickVector: Vector | undefined;
 
    constructor() {
       super({
@@ -17,7 +20,19 @@ export class Player extends Actor {
       });
    }
 
-   override onInitialize() {
+   override onInitialize(engine: Engine): void {
+      const joystickManager = nipplejs.create({
+         zone: document.querySelector<HTMLElement>('.game-container')!,
+      });
+
+      joystickManager.on('move', (event, data) => {
+         this._touchJoystickVector = vec(data.vector.x, data.vector.y);
+      });
+
+      joystickManager.on('end', (event, data) => {
+         this._touchJoystickVector = undefined;
+      });
+
       this.collider.useCircleCollider(8, vec(0, 4));
 
       const spriteSheet = SpriteSheet.fromImageSource({
@@ -45,23 +60,16 @@ export class Player extends Actor {
    }
 
    override onPreUpdate(engine: Engine, elapsedMs: number): void {
-      if (engine.input.keyboard.isHeld(Keys.Left)) {
-         this.vel.x = -RUN_SPEED;
+      const { x, y } = this._getInput(engine);
+
+      if (x === -1) {
          this._facingRight = false;
-      } else if (engine.input.keyboard.isHeld(Keys.Right)) {
-         this.vel.x = RUN_SPEED;
+      } else if (x === 1) {
          this._facingRight = true;
-      } else {
-         this.vel.x = 0;
       }
 
-      if (engine.input.keyboard.isHeld(Keys.Up)) {
-         this.vel.y = -RUN_SPEED;
-      } else if (engine.input.keyboard.isHeld(Keys.Down)) {
-         this.vel.y = RUN_SPEED;
-      } else {
-         this.vel.y = 0;
-      }
+      this.vel.x = RUN_SPEED * x;
+      this.vel.y = RUN_SPEED * y;
 
       if (this.vel.y !== 0 && this.vel.x !== 0) {
          this.vel.y /= Math.sqrt(2);
@@ -73,6 +81,34 @@ export class Player extends Actor {
       } else {
          this.graphics.use(this._facingRight ? 'run-right' : 'run-left');
       }
+   }
+
+   private _getInput(engine: Engine): { x: number, y: number } {
+      if (this._touchJoystickVector) {
+         return {
+            x: this._touchJoystickVector.x > TOUCH_JOYSTICK_DEADZONE ? 1
+               : this._touchJoystickVector.x < -TOUCH_JOYSTICK_DEADZONE ? -1 : 0,
+            y: this._touchJoystickVector.y > TOUCH_JOYSTICK_DEADZONE ? -1
+               : this._touchJoystickVector.y < -TOUCH_JOYSTICK_DEADZONE ? 1 : 0,
+         };
+      }
+
+      let x = 0,
+          y = 0;
+
+      if (engine.input.keyboard.isHeld(Keys.Left)) {
+         x = -1;
+      } else if (engine.input.keyboard.isHeld(Keys.Right)) {
+         x = 1;
+      }
+
+      if (engine.input.keyboard.isHeld(Keys.Up)) {
+         y = -1;
+      } else if (engine.input.keyboard.isHeld(Keys.Down)) {
+         y = 1;
+      }
+
+      return { x, y };
    }
 
 }
